@@ -114,10 +114,10 @@ export const Home: React.FC = () => {
         </TasteGrid>
       </Section>
 
-      {/* 친구들과 함께하는 이벤트 */}
+      {/* 나의 모임관리 */}
       <Section className="marginTop">
         <SectionHeader>
-          <SectionTitle>친구들과 함께하는 이벤트</SectionTitle>
+          <SectionTitle>나의 모임관리</SectionTitle>
           <MoreButton aria-label="더보기">⋯</MoreButton>
         </SectionHeader>
         <EventList>
