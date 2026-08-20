@@ -322,6 +322,7 @@ interface AppContextType {
   settlements: Settlement[];
   settlementInsight: { message: string; ctaLabel: string };
   addSettlement: (title: string, amount: number, category?: string) => void;
+  completeSettlement: (id: string) => void;
   addActivity: (title: string, image: string | null, avatarColor?: string, memo?: string) => void;
   appSettings: AppSettings;
   payoutAccount: PayoutAccount;
@@ -523,6 +524,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSettlements((prev) => [newSettlement, ...prev]);
   };
 
+  const completeSettlement = (id: string) => {
+    setSettlements((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: 'done' } : s))
+    );
+  };
+
   const addGroup = (name: string, purpose: string, icon?: string) => {
     const groupId = `group-${Date.now()}`;
     const newGroup: Group = {
@@ -655,6 +662,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         participationStats: initialParticipationStats,
         settlements,
         addSettlement,
+        completeSettlement,
         addActivity,
         settlementInsight: {
           message: '이번 달 정산이 원활하게 진행되고 있어요!\n미정산 내역 2건을 확인해보세요.',

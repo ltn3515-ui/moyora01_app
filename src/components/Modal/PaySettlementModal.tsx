@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import type { Settlement } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 import { useToast } from '../Toast';
+
+const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_LkKEypNArW9wbL9OkeKl3lmeaxYG';
 
 interface PaySettlementModalProps {
   isOpen: boolean;
@@ -62,7 +65,7 @@ export const PaySettlementModal: React.FC<PaySettlementModalProps> = ({
   onClose,
   onSuccessPay
 }) => {
-  const { payoutAccount, settlements } = useAppContext();
+  const { payoutAccount, settlements, profile, completeSettlement } = useAppContext();
   const { showToast } = useToast();
 
   const [activeSettlement, setActiveSettlement] = useState<Settlement | null>(settlement);
@@ -93,22 +96,78 @@ export const PaySettlementModal: React.FC<PaySettlementModalProps> = ({
     showToast(`'${item.title}' 정산 항목이 선택되었습니다. 💸`, 'info', '💸');
   };
 
-  const handleConfirmPay = () => {
+  const handleConfirmPay = async () => {
     setIsProcessing(true);
 
-    setTimeout(() => {
-      setIsProcessing(false);
-      showToast(
-        `'${currentPayMethodObj.name}'로 '${activeSettlement.title}' ₩${targetAmount}원 정산이 완료되었습니다! 🎉`,
-        'success',
-        '🎉'
-      );
+    // 직접 송금은 토스페이먼츠 연동 없이 기존의 모의 정산 흐름을 탑니다.
+    if (selectedMethod === 'bank_transfer') {
+      setTimeout(() => {
+        setIsProcessing(false);
+        showToast(
+          `'${currentPayMethodObj.name}'로 '${activeSettlement.title}' ₩${targetAmount}원 정산이 완료되었습니다! 🎉`,
+          'success',
+          '🎉'
+        );
+        completeSettlement(activeSettlement.id);
+        if (onSuccessPay) {
+          onSuccessPay(activeSettlement.id, currentPayMethodObj.name);
+        }
+        onClose();
+      }, 1200);
+      return;
+    }
 
-      if (onSuccessPay) {
-        onSuccessPay(activeSettlement.id, currentPayMethodObj.name);
+    try {
+      // 1. 토스페이먼츠 SDK 로드
+      const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
+
+      // 2. 결제 요청 인스턴스 생성
+      const payment = tossPayments.payment({
+        customerKey: profile?.id || 'ANONYMOUS'
+      });
+
+      // 3. 고유 주문 ID 및 결제 정보 정의
+      const orderId = `${activeSettlement.id}_${Date.now()}`;
+      const orderName = activeSettlement.title;
+      const successUrl = `${window.location.origin}/payment/success`;
+      const failUrl = `${window.location.origin}/payment/fail`;
+
+      // 4. 결제 수단별 파라미터 구성 및 결제창 호출
+      if (selectedMethod === 'tosspay' || selectedMethod === 'kakaopay') {
+        const easyPayName = selectedMethod === 'tosspay' ? '토스페이' : '카카오페이';
+        await payment.requestPayment({
+          method: 'CARD',
+          amount: {
+            currency: 'KRW',
+            value: activeSettlement.amount
+          },
+          orderId,
+          orderName,
+          successUrl,
+          failUrl,
+          card: {
+            flowMode: 'DIRECT',
+            easyPay: easyPayName
+          }
+        });
+      } else if (selectedMethod === 'card') {
+        await payment.requestPayment({
+          method: 'CARD',
+          amount: {
+            currency: 'KRW',
+            value: activeSettlement.amount
+          },
+          orderId,
+          orderName,
+          successUrl,
+          failUrl
+        });
       }
-      onClose();
-    }, 1200);
+    } catch (error: any) {
+      setIsProcessing(false);
+      console.error('Toss Payments Error:', error);
+      showToast(error.message || '결제창 호출에 실패했습니다.', 'error', '❌');
+    }
   };
 
   return (

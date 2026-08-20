@@ -17,6 +17,8 @@ import { Calculate } from './pages/Calculate';
 import { NewCru } from './pages/NewCru';
 import { Option } from './pages/Option';
 import { Account } from './pages/Account';
+import { PaymentSuccess } from './pages/payment/Success';
+import { PaymentFail } from './pages/payment/Fail';
 
 function App() {
   return (
@@ -37,6 +39,8 @@ function App() {
                 <Route path="/newcru" element={<NewCru />} />
                 <Route path="/option" element={<Option />} />
                 <Route path="/account" element={<Account />} />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/fail" element={<PaymentFail />} />
                 {/* 잘못된 경로는 홈(스플래시)으로 리다이렉트 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
