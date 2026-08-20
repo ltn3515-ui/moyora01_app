@@ -66,6 +66,12 @@ const MENU_ICONS = {
       <rect x="2" y="5" width="20" height="14" rx="3.5" fill="#8C7BF2" stroke="none" />
       <line x1="20" y1="5" x2="6" y2="17" stroke="#4C35AC" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
+  ),
+  logout: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E2574C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 4.5H6a1.5 1.5 0 0 0-1.5 1.5v12A1.5 1.5 0 0 0 6 19.5h3" />
+      <path d="M13.5 8 18 12l-4.5 4M18 12H9" />
+    </svg>
   )
 };
 
@@ -78,12 +84,12 @@ const CHEVRON_ICON = (
 interface MenuItem {
   key: string;
   label: string;
-  icon: 'gear' | 'image' | 'message';
+  icon: 'gear' | 'image' | 'message' | 'logout';
   color: string;
 }
 
 export const Profile: React.FC = () => {
-  const { profile, friends, setMemoryOpen } = useAppContext();
+  const { profile, friends, setMemoryOpen, handleLogout } = useAppContext();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [gaugeWidth, setGaugeWidth] = useState(0);
@@ -99,7 +105,8 @@ export const Profile: React.FC = () => {
   const menuItems: MenuItem[] = [
     { key: 'settings', label: '환경 설정', icon: 'gear', color: 'purple' },
     { key: 'moments', label: '저장된 순간들', icon: 'image', color: 'blue' },
-    { key: 'message', label: '메세지', icon: 'message', color: 'message' }
+    { key: 'message', label: '메세지', icon: 'message', color: 'message' },
+    { key: 'logout', label: '로그아웃', icon: 'logout', color: 'red' }
   ];
 
   useEffect(() => {
@@ -131,6 +138,17 @@ export const Profile: React.FC = () => {
       };
       setSelectedFriendForMessage(targetFriend);
       setIsMessageModalOpen(true);
+    } else if (item.key === 'logout') {
+      e.preventDefault();
+      handleLogout().then(() => {
+        showToast('로그아웃 되었습니다. 안녕히 가세요! 👋', 'info');
+        setTimeout(() => {
+          navigate('/login');
+        }, 800);
+      }).catch((err) => {
+        console.error('Logout error:', err);
+        showToast('로그아웃 도중 오류가 발생했습니다.', 'error');
+      });
     } else {
       e.preventDefault();
       alert(`"${item.label}" 메뉴는 다음 단계에서 개발 예정입니다.`);
@@ -174,7 +192,7 @@ export const Profile: React.FC = () => {
       </ProfileHero>
 
       {/* 주간 활동 게이지 */}
-      <Section>
+      <Section className="weeklyMargin">
         <WeeklyCard onClick={() => setIsWeeklyModalOpen(true)} style={{ cursor: 'pointer' }}>
           <WeeklyHead>
             <WeeklyLabel>주간 활동 ⚡</WeeklyLabel>
@@ -425,6 +443,10 @@ const HeroRole = styled.span`
 const Section = styled.section`
   padding: 0 20px;
 
+  &.weeklyMargin {
+    margin-top: 20px;
+  }
+
   &.statMargin {
     margin-top: 12px;
   }
@@ -656,6 +678,10 @@ const MenuIconWrapper = styled.span`
   box-shadow: 0 2px 8px rgba(140, 123, 242, 0.12);
   border: 1px solid rgba(220, 215, 235, 0.35);
   flex-shrink: 0;
+
+  &.red {
+    background: ${({ theme }) => theme.colors.pinkLight};
+  }
 `;
 
 const MenuLabel = styled.span`
