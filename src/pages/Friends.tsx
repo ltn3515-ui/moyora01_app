@@ -82,7 +82,16 @@ export const Friends: React.FC = () => {
       {/* 나의 프로필 카드 */}
       <ProfileCard>
         <ProfileAvatar>
-          <img src={profile.profileImage ? AVATAR_MAP[profile.profileImage] : leetaenoAvatar} alt="나의 프로필 사진" />
+          <img
+            src={
+              profile.profileImage
+                ? profile.profileImage.startsWith('data:') || profile.profileImage.startsWith('http')
+                  ? profile.profileImage
+                  : AVATAR_MAP[profile.profileImage] || leetaenoAvatar
+                : leetaenoAvatar
+            }
+            alt="나의 프로필 사진"
+          />
         </ProfileAvatar>
         <ProfileBody>
           <ProfileName>{profile.name}</ProfileName>
